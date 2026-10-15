@@ -41,7 +41,7 @@ Every release is still scanned and reviewed before it is public. This action onl
        runs-on: ubuntu-latest
        environment: release # optional, see Security
        steps:
-         - uses: actions/checkout@v5
+         - uses: actions/checkout@v7
          - uses: prusa3d/plugin-marketplace-publish@v1
            with:
              path: .
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: release # optional, see Security
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Pick the plugin from the tag
         id: plugin
         run: |
@@ -173,6 +173,12 @@ environment are refused by the marketplace.
 
 The marketplace remembers the repository's numeric GitHub id from the first release, so a
 repository deleted and re-created under the same name by someone else cannot publish.
+
+The action ships plain files only: it refuses a plugin folder with symbolic links (they could pull
+in files from the runner) or with a private key in it, and lists every file it signs in the log.
+On a self-hosted runner the credentials never appear on a command line.
+
+Report a vulnerability privately, see [SECURITY.md](SECURITY.md).
 
 ## License
 

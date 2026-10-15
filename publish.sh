@@ -41,6 +41,12 @@ marketplace="${marketplace%/}"
 
 id="$(jq -er '.id' "$src/manifest.json")" || fail "manifest.json has no id"
 version="$(jq -er '.version' "$src/manifest.json")" || fail "manifest.json has no version"
+# The marketplace's own rules. Checked here too because both end up in a file
+# name and in step outputs, where a stray "/" or newline would do damage.
+[[ "$id" =~ ^[a-z0-9]+(\.[a-z0-9-]+)+$ ]] ||
+  fail "manifest.json id must be reverse-DNS, e.g. com.example.my-plugin (got '$id')"
+[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]] ||
+  fail "manifest.json version must be semver, e.g. 1.2.0 (got '$version')"
 output plugin-id "$id"
 output version "$version"
 note "Plugin $id $version"
@@ -70,6 +76,11 @@ case "$channel" in stable | beta) ;; *) fail "channel must be stable or beta, go
 changelog="${INPUT_CHANGELOG:-}"
 [ -n "$changelog" ] || changelog="$(release_field '.release.body')"
 
+# zip follows symbolic links, so one would ship whatever file it points at on
+# the runner. A bundle is plain files only.
+links="$(cd "$src" && find . -path ./.git -prune -o -type l -print | sed 's|^\./||')"
+[ -z "$links" ] || fail "the plugin folder contains symbolic links, which a bundle cannot ship: $links"
+
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 bundle_dir="$work/bundle"
@@ -86,6 +97,13 @@ mkdir -p "$bundle_dir"
     done
 ) >"$work/manifest.txt"
 mv "$work/manifest.txt" "$bundle_dir/manifest.txt"
+
+# A key committed next to the plugin would be published with it.
+leaked="$(grep -rlIE -- '-----BEGIN ([A-Z0-9]+ )*PRIVATE KEY-----' "$bundle_dir" | sed "s|^$bundle_dir/||" || true)"
+[ -z "$leaked" ] || fail "the plugin folder contains a private key, which would be published with it: $leaked"
+
+note "Bundle contents:"
+sed 's/^[0-9a-f]*  /  /' "$bundle_dir/manifest.txt" >&2
 
 key="$work/key.pem"
 (umask 077 && printf '%s\n' "$INPUT_PRIVATE_KEY" >"$key")
@@ -122,10 +140,14 @@ if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] || [ -z "${ACTIONS_ID_TOKEN_REQUES
   fail "no OIDC token available: give the job 'permissions: id-token: write'"
 fi
 audience="$(jq -rn --arg v "$marketplace" '$v|@uri')"
-token="$(curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+# Credentials go to curl in header files, not arguments: on a shared
+# self-hosted runner other processes can read a command line.
+(umask 077 && printf 'Authorization: bearer %s\n' "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" >"$work/oidc.h")
+token="$(curl -sSf -H @"$work/oidc.h" \
   "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$audience" | jq -r '.value')" ||
   fail "could not get an OIDC token from GitHub"
 echo "::add-mask::$token"
+(umask 077 && printf 'Authorization: Bearer %s\n' "$token" >"$work/auth.h")
 
 base64 <"$bundle" | tr -d '\n' >"$work/bundle.b64"
 printf '%s' "$changelog" >"$work/changelog.md"
@@ -135,7 +157,7 @@ jq -n --rawfile bundle "$work/bundle.b64" --rawfile changelog "$work/changelog.m
   >"$work/body.json"
 
 status="$(curl -sS -o "$work/response.json" -w '%{http_code}' -X POST \
-  -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+  -H @"$work/auth.h" -H 'Content-Type: application/json' \
   --data-binary "@$work/body.json" "$marketplace/api/publish/v1/releases")" ||
   fail "could not reach $marketplace"
 

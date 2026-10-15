@@ -65,6 +65,22 @@ openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out "$work/ec.pe
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:1024 -out "$work/small.pem" 2>/dev/null
 expect_fail "an EC key" "${common[@]/INPUT_PRIVATE_KEY=*/INPUT_PRIVATE_KEY=$(cat "$work/ec.pem")}"
 expect_fail "a 1024-bit RSA key" "${common[@]/INPUT_PRIVATE_KEY=*/INPUT_PRIVATE_KEY=$(cat "$work/small.pem")}"
+# A bundle must never carry what is outside it, or a key.
+bad="$work/repo/plugins/bad"
+mkdir -p "$bad"
+cp "$plugin/manifest.json" "$plugin/main.lua" "$bad/"
+ln -s /etc/hosts "$bad/hosts"
+expect_fail "a symbolic link in the folder" "${common[@]/INPUT_PATH=*/INPUT_PATH=plugins/bad}"
+rm "$bad/hosts"
+cp "$work/key.pem" "$bad/private_key.pem"
+expect_fail "a private key in the folder" "${common[@]/INPUT_PATH=*/INPUT_PATH=plugins/bad}"
+rm "$bad/private_key.pem"
+sed -i.bak 's/"com.example.flow-tower"/"..\/..\/evil"/' "$bad/manifest.json"
+expect_fail "an id that is not reverse-DNS" "${common[@]/INPUT_PATH=*/INPUT_PATH=plugins/bad}"
+cp "$plugin/manifest.json" "$bad/manifest.json"
+sed -i.bak 's/"1.2.0"/"1.2.0\/..\/x"/' "$bad/manifest.json"
+expect_fail "a version that is not semver" "${common[@]/INPUT_PATH=*/INPUT_PATH=plugins/bad}"
+
 expect_fail "not a private key" "${common[@]/INPUT_PRIVATE_KEY=*/INPUT_PRIVATE_KEY=nope}"
 expect_fail "upload without id-token permission" "${common[@]/INPUT_DRY_RUN=true/INPUT_DRY_RUN=false}"
 echo "all good"

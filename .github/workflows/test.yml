@@ -1,6 +1,9 @@
 name: Test
+# Branches only: a release tag (v1) is a pointer to tested code, and the
+# dry-run job's sample manifest would not match it.
 on:
   push:
+    branches: ['**']
   pull_request:
 permissions:
   contents: read
@@ -8,7 +11,7 @@ jobs:
   shellcheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: shellcheck publish.sh tests/selftest.sh
   selftest:
     strategy:
@@ -16,12 +19,12 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: ./tests/selftest.sh
   dry-run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Sample plugin and key
         run: |
           mkdir -p sample

@@ -38,7 +38,7 @@ Every release is still scanned and reviewed before it is public. This action onl
        runs-on: ubuntu-latest
        environment: release # optional, see Security
        steps:
-         - uses: actions/checkout@v4
+         - uses: actions/checkout@v5
          - uses: prusa3d/plugin-marketplace-publish@v1
            with:
              path: .
@@ -56,7 +56,7 @@ plugin's folder, e.g. `flow-tower/v1.2.0`:
 
 ```yaml
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: plugin
         run: echo "dir=plugins/${GITHUB_REF_NAME%/v*}" >> "$GITHUB_OUTPUT"
       - uses: prusa3d/plugin-marketplace-publish@v1

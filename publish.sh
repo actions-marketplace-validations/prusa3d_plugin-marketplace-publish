@@ -22,6 +22,8 @@ note() { echo "$*" >&2; }
 output() { if [ -n "${GITHUB_OUTPUT:-}" ]; then echo "$1=$2" >>"$GITHUB_OUTPUT"; fi; }
 summary() { if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then echo "$*" >>"$GITHUB_STEP_SUMMARY"; fi; }
 
+echo "::notice title=Closed beta::The Prusa Plugin Marketplace is in closed beta."
+
 for tool in jq openssl zip curl; do
   command -v "$tool" >/dev/null || fail "$tool is required on the runner"
 done
@@ -111,6 +113,8 @@ note "Bundle $bundle ($(wc -c <"$bundle" | tr -d ' ') bytes)"
 if [ "${INPUT_DRY_RUN:-false}" = "true" ]; then
   note "Dry run: not uploading."
   summary "### $id $version signed (dry run, not uploaded)"
+  summary ""
+  summary "The Prusa Plugin Marketplace is in closed beta."
   exit 0
 fi
 
@@ -144,6 +148,6 @@ fi
 url="$(jq -r '.url' "$work/response.json")"
 output url "$url"
 note "Published $id $version to the $channel channel; it is waiting for review: $url"
-summary "### $id $version submitted to the Plugin Marketplace"
+summary "### $id $version submitted to the Plugin Marketplace (closed beta)"
 summary ""
 summary "Channel \`$channel\`, signed with key \`${fingerprint:0:16}…\`. Every release is scanned and reviewed before it goes public: [follow it in the author console]($url)."

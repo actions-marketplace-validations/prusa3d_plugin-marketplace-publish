@@ -1,5 +1,8 @@
 # Publish to Prusa Plugin Marketplace
 
+> [!NOTE]
+> The Prusa Plugin Marketplace is in closed beta.
+
 GitHub Action that signs a PrusaSlicer plugin bundle and publishes it to the
 [Prusa Plugin Marketplace](https://plugin-marketplace.prusa3d.com) with **trusted publishing**:
 the workflow proves which repository and workflow it is with the OIDC token GitHub issues to the

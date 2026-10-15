@@ -52,6 +52,17 @@ Every release is still scanned and reviewed before it is public. This action onl
    `v1.2.0` or `1.2.0`. A pre-release goes to the beta channel; the release notes become the
    changelog.
 
+## Plugin id
+
+The plugin's identity is the `id` in `manifest.json` (reverse-DNS, e.g. `com.example.flow-tower`)
+and never changes. A new id must sit in a namespace you have proven in the author console under
+*Namespaces*: a domain you own (`com.example.*`, by a DNS TXT record) or your GitHub account,
+`io.github.<owner>.*`, which the first release from a repository of `<owner>` proves by itself.
+Ids that read "prusa" are reserved for Prusa Research.
+
+The name, description and links shown in the catalogue come from `manifest.json` on the first
+release; later you change them in the author console, where every edit is moderated.
+
 ## Several plugins in one repository
 
 Add one trusted publisher per plugin, all with the same workflow, and tag each release with the

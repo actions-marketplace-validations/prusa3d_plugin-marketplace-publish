@@ -1,0 +1,58 @@
+name: Publish to Prusa Plugin Marketplace
+description: Sign a PrusaSlicer plugin bundle and publish it to the Prusa Plugin Marketplace with trusted publishing.
+author: Prusa Research
+branding:
+  icon: upload-cloud
+  color: orange
+
+inputs:
+  path:
+    description: Folder with the plugin bundle (manifest.json and the files it ships). Relative to the workspace.
+    default: .
+  private-key:
+    description: The author's RSA private key (PEM) the bundle is signed with. Pass a secret, e.g. secrets.PLUGIN_SIGNING_KEY. Its public key must be registered in the author console.
+    required: true
+  marketplace-url:
+    description: The marketplace to publish to.
+    default: https://plugin-marketplace.prusa3d.com
+  channel:
+    description: Release channel, stable or beta. Empty picks beta for a GitHub pre-release, stable otherwise.
+    default: ''
+  changelog:
+    description: Release notes (Markdown). Empty uses the GitHub release body.
+    default: ''
+  check-version:
+    description: When the run is for a tag, require the tag to end with manifest.json's version (v1.2.0, my-plugin/v1.2.0, com.example.plugin@1.2.0).
+    default: 'true'
+  dry-run:
+    description: Build and sign the bundle, but do not upload it.
+    default: 'false'
+
+outputs:
+  plugin-id:
+    description: The plugin id from manifest.json.
+    value: ${{ steps.publish.outputs.plugin-id }}
+  version:
+    description: The version from manifest.json.
+    value: ${{ steps.publish.outputs.version }}
+  bundle:
+    description: Path of the signed .zip that was built.
+    value: ${{ steps.publish.outputs.bundle }}
+  url:
+    description: The plugin in the author console, where the release waits for review.
+    value: ${{ steps.publish.outputs.url }}
+
+runs:
+  using: composite
+  steps:
+    - id: publish
+      shell: bash
+      run: '"$GITHUB_ACTION_PATH/publish.sh"'
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_PRIVATE_KEY: ${{ inputs.private-key }}
+        INPUT_MARKETPLACE_URL: ${{ inputs.marketplace-url }}
+        INPUT_CHANNEL: ${{ inputs.channel }}
+        INPUT_CHANGELOG: ${{ inputs.changelog }}
+        INPUT_CHECK_VERSION: ${{ inputs.check-version }}
+        INPUT_DRY_RUN: ${{ inputs.dry-run }}

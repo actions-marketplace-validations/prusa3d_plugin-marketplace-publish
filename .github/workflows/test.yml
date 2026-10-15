@@ -1,0 +1,38 @@
+name: Test
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck publish.sh tests/selftest.sh
+  selftest:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./tests/selftest.sh
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sample plugin and key
+        run: |
+          mkdir -p sample
+          echo '{"id":"com.example.sample","name":"Sample","version":"1.0.0","author":"00000000-0000-4000-8000-000000000000","license":"MIT","min_slicer_version":"2.9.0"}' > sample/manifest.json
+          echo 'return {}' > sample/main.lua
+          openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048
+          { echo 'KEY<<EOF'; cat key.pem; echo 'EOF'; } >> "$GITHUB_ENV"
+      - id: publish
+        uses: ./
+        with:
+          path: sample
+          private-key: ${{ env.KEY }}
+          dry-run: 'true'
+      - run: unzip -l "${{ steps.publish.outputs.bundle }}"

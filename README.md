@@ -9,15 +9,15 @@ Every release is still scanned and reviewed before it is public. This action onl
 
 ## Setup
 
-1. **Signing key.** Create an RSA key pair and register the public key in the author console
-   under *Signing keys*:
+1. **Signing key.** Create an RSA key pair (2048 bits or more) and register the public key in the
+   author console under *Signing keys*. An expired or revoked key no longer signs new releases:
 
    ```bash
    openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048
    openssl rsa -pubout -in private_key.pem -out public_key.pem
    ```
 
-   Store the contents of `private_key.pem` as the repository secret `PLUGIN_SIGNING_KEY`.
+   Store the contents of `private_key.pem` as the repository secret `PRUSA_SLICER_PLUGIN_MARKETPLACE_SIGNING_KEY`.
 
 2. **Trusted publisher.** In the author console under *Trusted publishing*, add the plugin id,
    `owner/repository`, the workflow file name (`release.yml`) and optionally a GitHub environment.
@@ -42,7 +42,7 @@ Every release is still scanned and reviewed before it is public. This action onl
          - uses: prusa3d/plugin-marketplace-publish@v1
            with:
              path: .
-             private-key: ${{ secrets.PLUGIN_SIGNING_KEY }}
+             private-key: ${{ secrets.PRUSA_SLICER_PLUGIN_MARKETPLACE_SIGNING_KEY }}
    ```
 
 4. **Release.** Publish a GitHub release whose tag ends with the `version` in `manifest.json`:
@@ -62,7 +62,7 @@ plugin's folder, e.g. `flow-tower/v1.2.0`:
       - uses: prusa3d/plugin-marketplace-publish@v1
         with:
           path: ${{ steps.plugin.outputs.dir }}
-          private-key: ${{ secrets.PLUGIN_SIGNING_KEY }}
+          private-key: ${{ secrets.PRUSA_SLICER_PLUGIN_MARKETPLACE_SIGNING_KEY }}
 ```
 
 The marketplace accepts a bundle only for a plugin id the repository and workflow are bound to,
@@ -72,7 +72,7 @@ so a release can never publish another plugin by accident.
 
 | Input | Default | |
 |-------|---------|---|
-| `private-key` | (required) | RSA private key (PEM) the bundle is signed with. Pass a secret. |
+| `private-key` | (required) | RSA private key (PEM, 2048 bits or more) the bundle is signed with. Pass a secret. Its public key must be an active signing key in the author console. |
 | `path` | `.` | Folder with `manifest.json` and the files the plugin ships. |
 | `marketplace-url` | `https://plugin-marketplace.prusa3d.com` | Marketplace to publish to. |
 | `channel` | auto | `stable` or `beta`. Empty: `beta` for a pre-release, `stable` otherwise. |

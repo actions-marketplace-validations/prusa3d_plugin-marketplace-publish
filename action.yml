@@ -10,7 +10,7 @@ inputs:
     description: Folder with the plugin bundle (manifest.json and the files it ships). Relative to the workspace.
     default: .
   private-key:
-    description: The author's RSA private key (PEM) the bundle is signed with. Pass a secret, e.g. secrets.PLUGIN_SIGNING_KEY. Its public key must be registered in the author console.
+    description: The author's RSA private key (PEM) the bundle is signed with. Pass a secret, e.g. secrets.PRUSA_SLICER_PLUGIN_MARKETPLACE_SIGNING_KEY. Its public key must be an active signing key in the author console (RSA, 2048 bits or more; not expired or revoked).
     required: true
   marketplace-url:
     description: The marketplace to publish to.

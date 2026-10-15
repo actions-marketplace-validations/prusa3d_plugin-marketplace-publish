@@ -35,7 +35,7 @@ src="${INPUT_PATH:-.}"
 marketplace="${INPUT_MARKETPLACE_URL:-https://plugin-marketplace.prusa3d.com}"
 marketplace="${marketplace%/}"
 [ -f "$src/manifest.json" ] || fail "no manifest.json in '$src' (set the path input to the plugin folder)"
-[ -n "${INPUT_PRIVATE_KEY:-}" ] || fail "private-key is empty: pass the signing key secret, e.g. private-key: \${{ secrets.PLUGIN_SIGNING_KEY }}"
+[ -n "${INPUT_PRIVATE_KEY:-}" ] || fail "private-key is empty: pass the signing key secret, e.g. private-key: \${{ secrets.PRUSA_SLICER_PLUGIN_MARKETPLACE_SIGNING_KEY }}"
 
 id="$(jq -er '.id' "$src/manifest.json")" || fail "manifest.json has no id"
 version="$(jq -er '.version' "$src/manifest.json")" || fail "manifest.json has no version"
@@ -87,7 +87,12 @@ mv "$work/manifest.txt" "$bundle_dir/manifest.txt"
 
 key="$work/key.pem"
 (umask 077 && printf '%s\n' "$INPUT_PRIVATE_KEY" >"$key")
-openssl pkey -in "$key" -noout 2>/dev/null || fail "private-key is not a PEM private key"
+key_text="$(openssl pkey -in "$key" -noout -text 2>/dev/null)" || fail "private-key is not a PEM private key"
+# The marketplace registers RSA keys of 2048 bits or more only; anything else
+# would sign fine here and fail verification there with a vaguer message.
+grep -qi '^modulus:' <<<"$key_text" || fail "private-key must be an RSA key (the marketplace verifies RSA signatures only)"
+bits="$(head -1 <<<"$key_text" | grep -o '[0-9]\+' | head -1)"
+[ "${bits:-0}" -ge 2048 ] || fail "private-key must be RSA with at least 2048 bits, got ${bits:-unknown}"
 openssl dgst -sha256 -sign "$key" -out "$bundle_dir/manifest.sig" "$bundle_dir/manifest.txt"
 openssl pkey -in "$key" -pubout -out "$work/public.pem"
 rm -f "$key"

@@ -61,6 +61,10 @@ echo "ok: manifest.txt covers every file"
 
 expect_fail "tag for another version" "${common[@]}" GITHUB_REF_TYPE=tag GITHUB_REF_NAME=v1.1.0
 expect_fail "tag that only ends like the version" "${common[@]}" GITHUB_REF_TYPE=tag GITHUB_REF_NAME=11.2.0
+openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out "$work/ec.pem" 2>/dev/null
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:1024 -out "$work/small.pem" 2>/dev/null
+expect_fail "an EC key" "${common[@]/INPUT_PRIVATE_KEY=*/INPUT_PRIVATE_KEY=$(cat "$work/ec.pem")}"
+expect_fail "a 1024-bit RSA key" "${common[@]/INPUT_PRIVATE_KEY=*/INPUT_PRIVATE_KEY=$(cat "$work/small.pem")}"
 expect_fail "not a private key" "${common[@]/INPUT_PRIVATE_KEY=*/INPUT_PRIVATE_KEY=nope}"
 expect_fail "upload without id-token permission" "${common[@]/INPUT_DRY_RUN=true/INPUT_DRY_RUN=false}"
 echo "all good"

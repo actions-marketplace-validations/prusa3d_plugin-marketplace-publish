@@ -156,14 +156,20 @@ jq -n --rawfile bundle "$work/bundle.b64" --rawfile changelog "$work/changelog.m
   '{bundle: $bundle, channel: $channel} + (if $changelog == "" then {} else {changelog: $changelog} end)' \
   >"$work/body.json"
 
-status="$(curl -sS -o "$work/response.json" -w '%{http_code}' -X POST \
+status="$(curl -sS -o "$work/response.json" -D "$work/headers" -w '%{http_code}' -X POST \
   -H @"$work/auth.h" -H 'Content-Type: application/json' \
   --data-binary "@$work/body.json" "$marketplace/api/publish/v1/releases")" ||
   fail "could not reach $marketplace"
 
 if [ "$status" != "201" ]; then
   message="$(jq -r '.error // empty' "$work/response.json" 2>/dev/null || true)"
-  [ -n "$message" ] || message="$(head -c 500 "$work/response.json")"
+  if [ -z "$message" ]; then
+    # Not the marketplace's JSON: something in front of it (a proxy, a firewall)
+    # answered. Name it instead of dumping its HTML.
+    title="$(tr -d '\n' <"$work/response.json" | grep -o '<title>[^<]*' | head -1 | sed 's/<title>//' || true)"
+    ray="$(grep -i '^cf-ray:' "$work/headers" | tail -1 | cut -d' ' -f2 | tr -d '\r' || true)"
+    message="the answer did not come from the marketplace${title:+ (\"$title\")}${ray:+, Cloudflare Ray ID $ray}"
+  fi
   fail "the marketplace refused the release ($status): $message"
 fi
 

@@ -1,8 +1,6 @@
 # Security
 
-Please report a vulnerability in this action privately, through GitHub's
-[private vulnerability reporting](https://github.com/prusa3d/plugin-marketplace-publish/security/advisories/new),
-not in a public issue.
+This project follows the [Prusa Research security policy](https://www.prusa3d.com/page/security-policy_230500/).
 
-The action signs the bundle inside the workflow run: the private key is never sent anywhere, and
-the marketplace receives only the signed bundle and the run's short-lived OIDC token.
+Please report a vulnerability privately to [security@prusa3d.com](mailto:security@prusa3d.com),
+not in a public issue.

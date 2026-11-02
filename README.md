@@ -26,7 +26,20 @@ A complete, working plugin repository to copy:
    openssl rsa -pubout -in private_key.pem -out public_key.pem
    ```
 
-   Store the contents of `private_key.pem` as the repository secret `PRUSA_SLICER_PLUGIN_MARKETPLACE_SIGNING_KEY`.
+   Store the private key as the secret `PRUSA_SLICER_PLUGIN_MARKETPLACE_SIGNING_KEY`, ideally in a
+   protected environment (see [Security](#security)):
+
+   ```bash
+   gh secret set PRUSA_SLICER_PLUGIN_MARKETPLACE_SIGNING_KEY --env release < private_key.pem
+   ```
+
+   > [!WARNING]
+   > The private key is your identity as an author. Whoever has it can sign plugins that the
+   > marketplace and PrusaSlicer accept as yours. Never commit it or paste it anywhere else.
+   > Keep a backup in a safe place, such as a password manager: the marketplace holds only the
+   > public key and GitHub never shows a secret again, so nobody can give you a lost key back.
+   > If it leaks, revoke it in the author console under *Signing keys* right away and register a
+   > new one.
 
 2. **Trusted publisher.** In the author console under *Trusted publishing*, add the plugin id,
    `owner/repository`, the workflow file name (`release.yml`) and optionally a GitHub environment.

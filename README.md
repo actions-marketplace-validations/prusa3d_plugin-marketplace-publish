@@ -204,6 +204,10 @@ the code you reviewed, pin a commit instead (Dependabot keeps the pin current):
 
 Report a vulnerability privately, see [SECURITY.md](SECURITY.md).
 
+## Contributing
+
+Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 [MIT](LICENSE)

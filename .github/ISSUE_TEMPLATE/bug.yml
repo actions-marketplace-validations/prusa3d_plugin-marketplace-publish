@@ -1,0 +1,35 @@
+name: Bug report
+description: The action fails or does something it should not.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report a security problem privately, see SECURITY.md. Remove secrets from logs before you paste them.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow
+      description: The job that uses the action (the `uses:` step and its `with:` inputs).
+      render: yaml
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: The step's log, at least the `::error::` line and what comes before it.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Action version
+      description: The ref you use, e.g. v1 or a commit sha.
+      placeholder: v1

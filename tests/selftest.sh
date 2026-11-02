@@ -20,6 +20,11 @@ printf -- '-- plugin\nreturn {}\n' >"$plugin/main.lua"
 printf 'icon' >"$plugin/assets/icon file.png"
 printf 'stale' >"$plugin/manifest.sig"
 printf 'not shipped' >"$plugin/.git/HEAD"
+# Only the root manifest.txt / manifest.sig are the signature's; a nested one ships.
+mkdir -p "$plugin/docs" "$plugin/.github"
+printf 'notes' >"$plugin/docs/manifest.txt"
+# .github is not shipped, so a link in it is not followed and not refused.
+ln -s /etc/hosts "$plugin/.github/hosts"
 
 expect_fail() {
   local name="$1"
@@ -56,7 +61,9 @@ echo "ok: signature verifies"
   [ "$sum" = "$actual" ] || { echo "FAIL: checksum of $file" >&2; exit 1; }
 done <manifest.txt)
 lines="$(wc -l <"$work/unzipped/manifest.txt" | tr -d ' ')"
-[ "$lines" = "3" ] || { echo "FAIL: manifest.txt lists $lines files, expected 3" >&2; exit 1; }
+[ "$lines" = "4" ] || { echo "FAIL: manifest.txt lists $lines files, expected 4" >&2; exit 1; }
+grep -q '  docs/manifest.txt$' "$work/unzipped/manifest.txt" || { echo "FAIL: docs/manifest.txt not shipped" >&2; exit 1; }
+[ ! -e "$work/unzipped/.github" ] || { echo "FAIL: .github shipped" >&2; exit 1; }
 echo "ok: manifest.txt covers every file"
 
 expect_fail "tag for another version" "${common[@]}" GITHUB_REF_TYPE=tag GITHUB_REF_NAME=v1.1.0

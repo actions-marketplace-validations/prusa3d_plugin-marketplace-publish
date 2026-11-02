@@ -1,7 +1,10 @@
 # Publish to Prusa Plugin Marketplace
 
+[![Test](https://github.com/prusa3d/plugin-marketplace-publish/actions/workflows/test.yml/badge.svg)](https://github.com/prusa3d/plugin-marketplace-publish/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 > [!NOTE]
-> The Prusa Plugin Marketplace is in closed beta.
+> The Prusa Plugin Marketplace is in beta.
 
 GitHub Action that signs a PrusaSlicer plugin bundle and publishes it to the
 [Prusa Plugin Marketplace](https://plugin-marketplace.prusa3d.com) with **trusted publishing**:
@@ -9,6 +12,9 @@ the workflow proves which repository and workflow it is with the OIDC token GitH
 run. There is no marketplace password or API key to store.
 
 Every release is still scanned and reviewed before it is public. This action only submits it.
+
+A complete, working plugin repository to copy:
+[prusa3d/plugin-marketplace-example](https://github.com/prusa3d/plugin-marketplace-example).
 
 ## Setup
 
@@ -153,7 +159,8 @@ author console).
 
 ## What it does
 
-1. Copies the folder, leaving out `.git`, `.github` and any old `manifest.txt` / `manifest.sig`.
+1. Copies the folder, leaving out `.git`, `.github` and an old `manifest.txt` / `manifest.sig` at
+   its root.
 2. Writes `manifest.txt` with the SHA-256 of every file and signs it into `manifest.sig`
    (`openssl dgst -sha256 -sign`, RSA PKCS#1 v1.5), then verifies the signature.
 3. Zips the bundle with `manifest.json` at its root.
@@ -178,8 +185,12 @@ The action ships plain files only: it refuses a plugin folder with symbolic link
 in files from the runner) or with a private key in it, and lists every file it signs in the log.
 On a self-hosted runner the credentials never appear on a command line.
 
+The action receives your signing key. `@v1` follows the latest compatible release; to run exactly
+the code you reviewed, pin a commit instead (Dependabot keeps the pin current):
+`uses: prusa3d/plugin-marketplace-publish@<commit sha> # v1.0.1`.
+
 Report a vulnerability privately, see [SECURITY.md](SECURITY.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)

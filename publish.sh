@@ -22,7 +22,7 @@ note() { echo "$*" >&2; }
 output() { if [ -n "${GITHUB_OUTPUT:-}" ]; then echo "$1=$2" >>"$GITHUB_OUTPUT"; fi; }
 summary() { if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then echo "$*" >>"$GITHUB_STEP_SUMMARY"; fi; }
 
-echo "::notice title=Closed beta::The Prusa Plugin Marketplace is in closed beta."
+echo "::notice title=Beta::The Prusa Plugin Marketplace is in beta."
 
 for tool in jq openssl zip curl; do
   command -v "$tool" >/dev/null || fail "$tool is required on the runner"
@@ -77,21 +77,22 @@ changelog="${INPUT_CHANGELOG:-}"
 [ -n "$changelog" ] || changelog="$(release_field '.release.body')"
 
 # zip follows symbolic links, so one would ship whatever file it points at on
-# the runner. A bundle is plain files only.
-links="$(cd "$src" && find . -path ./.git -prune -o -type l -print | sed 's|^\./||')"
+# the runner. A bundle is plain files only. .git and .github are not shipped.
+links="$(cd "$src" && find . \( -name .git -o -name .github \) -prune -o -type l -print | sed 's|^\./||')"
 [ -z "$links" ] || fail "the plugin folder contains symbolic links, which a bundle cannot ship: $links"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 bundle_dir="$work/bundle"
 mkdir -p "$bundle_dir"
-# The bundle is the folder as committed, minus an old signature and VCS files.
-(cd "$src" && tar --exclude=.git --exclude=.github --exclude=manifest.txt --exclude=manifest.sig -cf - .) |
-  (cd "$bundle_dir" && tar -xf -)
+# The bundle is the folder as committed, minus VCS files and an old signature
+# (at the root only: a docs/manifest.txt is the plugin's own file).
+(cd "$src" && tar --exclude=.git --exclude=.github -cf - .) | (cd "$bundle_dir" && tar -xf -)
+rm -f "$bundle_dir/manifest.txt" "$bundle_dir/manifest.sig"
 
 (
   cd "$bundle_dir"
-  find . -type f ! -name manifest.txt ! -name manifest.sig | sed 's|^\./||' | LC_ALL=C sort |
+  find . -type f ! -path ./manifest.txt ! -path ./manifest.sig | sed 's|^\./||' | LC_ALL=C sort |
     while IFS= read -r file; do
       printf '%s  %s\n' "$(sha256 "$file")" "$file"
     done
@@ -132,7 +133,7 @@ if [ "${INPUT_DRY_RUN:-false}" = "true" ]; then
   note "Dry run: not uploading."
   summary "### $id $version signed (dry run, not uploaded)"
   summary ""
-  summary "The Prusa Plugin Marketplace is in closed beta."
+  summary "The Prusa Plugin Marketplace is in beta."
   exit 0
 fi
 
@@ -176,6 +177,6 @@ fi
 url="$(jq -r '.url' "$work/response.json")"
 output url "$url"
 note "Published $id $version to the $channel channel; it is waiting for review: $url"
-summary "### $id $version submitted to the Plugin Marketplace (closed beta)"
+summary "### $id $version submitted to the Plugin Marketplace (beta)"
 summary ""
 summary "Channel \`$channel\`, signed with key \`${fingerprint:0:16}…\`. Every release is scanned and reviewed before it goes public: [follow it in the author console]($url)."

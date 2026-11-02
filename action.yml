@@ -1,5 +1,5 @@
 name: Publish to Prusa Plugin Marketplace
-description: Sign a PrusaSlicer plugin bundle and publish it to the Prusa Plugin Marketplace (closed beta) with trusted publishing.
+description: Sign a PrusaSlicer plugin bundle and publish it to the Prusa Plugin Marketplace (beta) with trusted publishing.
 author: Prusa Research
 branding:
   icon: upload-cloud
